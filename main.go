@@ -3,35 +3,26 @@ package main
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	colly "github.com/gocolly/colly"
 )
 
+type Movie struct {
+	Name     string
+	Uploaded string
+	Magnet   string //link webtorrent
+	Size     string
+	Seeds    string //as of new seeds are already sorted in descending order in 1337x.to
+	Uploader string
+}
+
 func getinfo(url string) []string {
 
 	var links []string
-	var magnet string
 
 	c := colly.NewCollector(
 		colly.MaxDepth(1),
 	)
-
-	// selection criteria
-	c.OnHTML("a[href]", func(h *colly.HTMLElement) {
-
-		doc := h.DOM
-
-		if attr, exists := doc.Attr("href"); exists {
-			if strings.Contains(attr, "/torrent/") && !strings.HasPrefix(attr, "http://itorrents.org") && !strings.HasPrefix(attr, "http://btcache.me") {
-				link := "https://1337x.to" + attr
-				c.Visit(link)
-			}
-			if strings.Contains(attr, "magnet:?") {
-				magnet = attr
-			}
-		}
-	})
 
 	// Before making a request print "Visiting ..."
 	c.OnRequest(func(r *colly.Request) {
@@ -58,10 +49,10 @@ func main() {
 	url := "https://1337x.to/search/spiderman/1/"
 
 	// getinfo(url)
-	links := getinfo(url)
+	movielist := getinfo(url)
 
 	// print out the results
-	for _, link := range links {
-		fmt.Println(link)
+	for _, movie := range movielist {
+		fmt.Println(movie)
 	}
 }
