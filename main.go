@@ -70,23 +70,34 @@ func scrapev2(url string) (mvlist []Movie) {
 	return
 
 }
-func movieFromString(data string, magnet string) Movie {
-	elements := strings.Split(data, "\n")
-	// Need to find a better way to do the parsing. This is fragile.
+func movieFromString(document *goquery.Selection) Movie {
+
+	// elements := strings.Split(data, "\n")
+	// // Need to find a better way to do the parsing. This is fragile.
+	// return Movie{
+	// 	Name:     elements[1],
+	// 	Uploaded: elements[4],
+	// 	Magnet:   magnet,
+	// 	Size:     "formatSize1337x(elements[5])",
+	// 	Seeds:    elements[2],
+	// 	Uploader: elements[6],
+	// }
+
 	return Movie{
-		Name:     elements[1],
-		Uploaded: elements[4],
-		Magnet:   magnet,
-		Size:     "formatSize1337x(elements[5])",
-		Seeds:    elements[2],
-		Uploader: elements[6],
+		Name:     document.Find("td.name > a:nth-child(2)").Text(),
+		Uploaded: document.Find("td.coll-date").Text(),
+		Size:     strings.Replace(document.Find("td.size").Text(), document.Find("td.seeds").Text(), "", -1),
+		Seeds:    document.Find("td.seeds").Text(),
+		Uploader: document.Find("td.coll-5").Text(),
 	}
 }
 
-func instantTest(url string) ([]string, []Movie) {
+var Movies []Movie
+
+func instantTest(url string) {
 
 	var links []string
-	var movielist []Movie
+	movielist := make([]Movie, 0)
 
 	c := colly.NewCollector()
 
@@ -103,7 +114,7 @@ func instantTest(url string) ([]string, []Movie) {
 			}
 		}
 
-		newmovie := movieFromString(doc.Text(), "magnet")
+		newmovie := movieFromString(doc)
 		movielist = append(movielist, newmovie)
 
 	})
@@ -119,22 +130,17 @@ func instantTest(url string) ([]string, []Movie) {
 			if magnet, exists := s.Attr("href"); exists {
 				if strings.Contains(magnet, "magnet") {
 					for _, movie := range movielist {
-						fmt.Println(strings.TrimSpace(movie.Name))
-						fmt.Println(strings.TrimSpace(movieName))
+						// fmt.Println(strings.TrimSpace(movie.Name))
+						// fmt.Println(strings.TrimSpace(movieName))
 						if strings.TrimSpace(movie.Name) == strings.TrimSpace(movieName) {
-							fmt.Println("strings matches now bitches")
+							fmt.Println("the name matches")
 							movie.Magnet = magnet
-						} else {
-							fmt.Println("ahhh fuck the name doesn't match")
+							Movies = append(Movies, movie)
 						}
-
 					}
 				}
 			}
 		})
-	})
-	c.OnXML("//h1", func(e *colly.XMLElement) {
-		fmt.Println(e.Text)
 	})
 
 	// Before making a request print "Visiting ..."
@@ -156,31 +162,30 @@ func instantTest(url string) ([]string, []Movie) {
 	for _, link := range links {
 		c.Visit(link)
 	}
-	return links, movielist[1:]
 
 }
 func main() {
 
 	url := "https://1337x.to/search/spiderman/1/"
-	links, movies := instantTest(url)
+	instantTest(url)
 
-	fmt.Println("links to scrape")
-	fmt.Println("---------------------------------------")
-	for _, link := range links {
-		fmt.Println(link)
-	}
-	fmt.Println("---------------------------------------")
+	// fmt.Println("links to scrape")
+	// fmt.Println("---------------------------------------")
+	// for _, link := range links {
+	// 	fmt.Println(link)
+	// }
+	// fmt.Println("---------------------------------------")
 
 	fmt.Println("movies : ")
 	fmt.Println("---------------------------------------")
-	for _, movie := range movies {
+	for _, movie := range Movies {
 		fmt.Println("-------movie------")
-		fmt.Println(movie.Name)
-		fmt.Println(movie.Uploaded)
-		fmt.Println(movie.Seeds)
-		fmt.Println(movie.Uploader)
-		fmt.Println(movie.Size)
-		fmt.Println(movie.Magnet)
+		fmt.Println("Name of the movie : ", movie.Name)
+		fmt.Println("uploade date : ", movie.Uploaded)
+		fmt.Println("magnetlink : ", movie.Magnet)
+		fmt.Println("file size: :", movie.Size)
+		fmt.Println("seeds: ", movie.Seeds)
+		fmt.Println("uploader : ", movie.Uploader)
 		fmt.Println("-------------")
 	}
 	fmt.Println("---------------------------------------")
