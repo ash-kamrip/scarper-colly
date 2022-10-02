@@ -5,8 +5,18 @@ import (
 	"log"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	colly "github.com/gocolly/colly"
 )
+
+type Movie struct {
+	Name     string
+	Uploaded string
+	Magnet   string //link webtorrent
+	Size     string
+	Seeds    string //as of new seeds are already sorted in descending order in 1337x.to
+	Uploader string
+}
 
 func getinfo(url string) []string {
 
@@ -30,7 +40,29 @@ func getinfo(url string) []string {
 			if strings.Contains(attr, "magnet") {
 				magnetlinks = append(magnetlinks, attr)
 			}
+
+			fmt.Println("movie name and magnet found")
+			fmt.Println()
 		}
+	})
+
+	c.OnHTML("div.col-9 div.box-info", func(h *colly.HTMLElement) {
+
+		metadata := h.DOM
+		// fmt.Println(metadata.Find("div.box-info-heading h1").Text())
+		// magnet found
+		metadata.Find("a").Each(func(i int, s *goquery.Selection) {
+			if magnet, exists := s.Attr("href"); exists {
+				if strings.Contains(magnet, "magnet") {
+					fmt.Println(magnet)
+				}
+			}
+		})
+		// seeds
+		// Uploaded
+		// Size
+		// Seeds
+		// Uploader
 	})
 
 	// Before making a request print "Visiting ..."
