@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	colly "github.com/gocolly/colly"
 )
 
@@ -35,12 +36,31 @@ func scrapev2(url string) (mvlist []Movie) {
 
 	})
 
-	c.OnHTML("div.col-9 div.box-info torrent-detail-page  vpn-info-wrap div.box-info-heading clearfix", func(h *colly.HTMLElement) {
-		fmt.Println("this is being hit")
+	c.OnHTML("div.col-9 div.box-info", func(h *colly.HTMLElement) {
+
 		metadata := h.DOM
+		// fmt.Println(metadata.Find("div.box-info-heading h1").Text())
 
-		fmt.Println(metadata.Find("h1").Text())
+		// movieName
+		metadata.Find("h1").Each(func(i int, s *goquery.Selection) {
+			fmt.Println(s.Text())
 
+		})
+		// magnet found
+		metadata.Find("a").Each(func(i int, s *goquery.Selection) {
+			if magnet, exists := s.Attr("href"); exists {
+				if strings.Contains(magnet, "magnet") {
+					fmt.Println(magnet)
+				}
+			}
+		})
+		// seeds
+		//
+
+		// Uploaded
+		// Size
+		// Seeds
+		// Uploader
 	})
 
 	// Before making a request print "Visiting ..."
