@@ -18,70 +18,7 @@ type Movie struct {
 	Uploader string
 }
 
-func scrapev2(url string) (mvlist []Movie) {
-
-	c := colly.NewCollector()
-	// selection criteria
-
-	// scrape the links from the whole page
-	c.OnHTML("a[href]", func(h *colly.HTMLElement) {
-
-		doc := h.DOM
-		if attr, exists := doc.Attr("href"); exists {
-			if strings.Contains(attr, "/torrent/") && !strings.HasPrefix(attr, "http://") {
-
-				link := "https://1337x.to" + attr
-				c.Visit(link)
-			}
-		}
-
-	})
-
-	c.OnHTML("div.col-9 div.box-info", func(h *colly.HTMLElement) {
-
-		metadata := h.DOM
-		// fmt.Println(metadata.Find("div.box-info-heading h1").Text())
-		// magnet found
-		metadata.Find("a").Each(func(i int, s *goquery.Selection) {
-			if magnet, exists := s.Attr("href"); exists {
-				if strings.Contains(magnet, "magnet") {
-					fmt.Println(magnet)
-				}
-			}
-		})
-	})
-
-	// Before making a request print "Visiting ..."
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
-
-	c.OnError(func(_ *colly.Response, err error) {
-		log.Println("Something went wrong:", err)
-	})
-
-	c.OnScraped(func(r *colly.Response) {
-		fmt.Println("Finished")
-	})
-
-	// tells the collector to start scraping
-	c.Visit(url)
-
-	return
-
-}
 func movieFromString(document *goquery.Selection) Movie {
-
-	// elements := strings.Split(data, "\n")
-	// // Need to find a better way to do the parsing. This is fragile.
-	// return Movie{
-	// 	Name:     elements[1],
-	// 	Uploaded: elements[4],
-	// 	Magnet:   magnet,
-	// 	Size:     "formatSize1337x(elements[5])",
-	// 	Seeds:    elements[2],
-	// 	Uploader: elements[6],
-	// }
 
 	return Movie{
 		Name:     document.Find("td.name > a:nth-child(2)").Text(),
